@@ -243,17 +243,6 @@ OPTIONS (
     header 'true'
 );
 
--- Просмотр последних записей
-SELECT 
-    log_time,
-    user_name,
-    database_name,
-    error_severity,
-    message,
-    query
-FROM pg_log_csv
-ORDER BY log_time DESC
-LIMIT 20;
 ```
 
 ## Часть 2. Мониторинг активности: pg_stat_activity 
