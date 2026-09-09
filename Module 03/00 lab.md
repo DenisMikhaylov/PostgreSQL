@@ -143,8 +143,8 @@ GRANT ALL PRIVILEGES ON products, orders TO admins;
 GRANT USAGE, SELECT ON SEQUENCE products_id_seq, orders_id_seq TO admins;
 
 -- Права по умолчанию для будущих таблиц
-GRANT ALL PRIVILEGES ON products, orders TO admins;
-GRANT USAGE, SELECT ON SEQUENCE products_id_seq, orders_id_seq TO admins;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readers;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO writers;
 ```
 
 **Задание 1.7:** Проверьте работу привилегий (подключитесь от имени разных пользователей):
