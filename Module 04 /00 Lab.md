@@ -461,65 +461,6 @@ SELECT * FROM session_monitor;
 ```
 
 
-## Часть 3. Мониторинг производительности: pg_stat_statements 
-
-### 3.1. Установка pg_stat_statements
-
-Если расширение ещё не установлено, выполните:
-
-```sql
--- Проверка, установлено ли расширение
-SELECT * FROM pg_extension WHERE extname = 'pg_stat_statements';
-
--- Если не установлено:
-CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
-
--- Проверка параметров pg_stat_statements
-SELECT 
-    name, 
-    setting, 
-    unit,
-    short_desc
-FROM pg_settings
-WHERE name LIKE 'pg_stat_statements%';
-```
-
-### 3.2. Сбор статистики запросов
-
-**Задание 3.1:** Выполните различные запросы для накопления статистики:
-
-```sql
--- 1. Простые SELECT-запросы
-SELECT * FROM test_data WHERE value BETWEEN 100 AND 200 LIMIT 10;
-SELECT * FROM test_data WHERE value BETWEEN 200 AND 300 LIMIT 10;
-SELECT * FROM test_data WHERE value BETWEEN 300 AND 400 LIMIT 10;
-
--- 2. Агрегирующие запросы
-SELECT value, count(*) FROM test_data GROUP BY value ORDER BY value LIMIT 10;
-SELECT avg(value) FROM test_data;
-SELECT max(value), min(value) FROM test_data;
-
--- 3. Запросы с JOIN (самособъединение)
-SELECT t1.value, count(*)
-FROM test_data t1
-JOIN test_data t2 ON t1.value = t2.value
-GROUP BY t1.value
-LIMIT 5;
-
--- 4. Запросы с ORDER BY
-SELECT * FROM test_data ORDER BY value DESC LIMIT 100;
-
--- 5. Обновление данных
-UPDATE test_data SET value = value + 1 WHERE id % 10 = 0;
-
--- 6. Вставка данных
-INSERT INTO test_data (name, value) 
-SELECT 'New_' || generate_series, floor(random() * 1000)::int
-FROM generate_series(1, 100);
-
--- 7. Удаление данных
-DELETE FROM test_data WHERE id % 100 = 0;
-```
 
 
 
