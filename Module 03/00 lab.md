@@ -421,9 +421,9 @@ CREATE POLICY active_policy ON employees
 ```sql
 -- RESTRICTIVE: директор видит всех, но с ограничением по зарплате
 CREATE POLICY salary_restriction ON employees
+    AS RESTRICTIVE
     FOR SELECT
     TO director
-    AS RESTRICTIVE
     USING (salary < 150000);
 
 -- Проверка
