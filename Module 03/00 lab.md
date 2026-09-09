@@ -136,7 +136,7 @@ INSERT INTO orders (product_id, customer_name, quantity, status) VALUES
 GRANT SELECT ON products, orders TO readers;
 
 -- writers: чтение + изменение
-GRANT SELECT ON products, orders TO readers;
+GRANT SELECT ON products, orders TO writers;
 
 -- admins: все привилегии (включая изменение схемы)
 GRANT ALL PRIVILEGES ON products, orders TO admins;
