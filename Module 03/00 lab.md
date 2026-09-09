@@ -320,6 +320,7 @@ INSERT INTO tenant_orders (tenant_id, order_number, amount) VALUES
 
 -- Даём базовые права
 GRANT SELECT, INSERT, UPDATE, DELETE ON tenant_orders TO tenant1, tenant2;
+GRANT SELECT, INSERT, UPDATE, DELETE ON tenants TO tenant1, tenant2;
 GRANT USAGE ON SEQUENCE tenant_orders_id_seq TO tenant1, tenant2;
 ```
 
