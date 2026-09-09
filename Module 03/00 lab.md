@@ -140,7 +140,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON products, orders TO writers;
 
 -- admins: все привилегии (включая изменение схемы)
 GRANT ALL PRIVILEGES ON products, orders TO admins;
-GRANT USAGE, SELECT ON SEQUENCE products_id_seq, orders_id_seq TO admins;
+GRANT USAGE, SELECT ON SEQUENCE products_id_seq, orders_id_seq TO writers;
 
 -- Права по умолчанию для будущих таблиц
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readers;
