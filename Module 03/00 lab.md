@@ -255,8 +255,8 @@ SET ROLE staff;
 -- Видны только строки с deadfiled = FALSE
 SELECT * FROM customers;  -- не видно Сидорова
 
--- Попытка обновить видимую строку (должна работать)
-UPDATE customers SET phone = '+79990001122' WHERE id = 1;
+-- Попытка обновить видимую строку (не должна работать)
+UPDATE customers SET phone = '+79990001122' WHERE id = 1; -- 0 rows updated
 
 -- Попытка обновить невидимую строку (не должна работать)
 UPDATE customers SET phone = '+79990001122' WHERE id = 3;  -- 0 rows updated
