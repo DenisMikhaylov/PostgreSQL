@@ -2,7 +2,7 @@
 
 
 
-**Цель работы:** Изучить на практике обобщённые табличные выражения (Common Table Expressions, CTE) в PostgreSQL/Postgres Pro: синтаксис `WITH`, рекурсивные CTE, CTE с DML-операциями (`INSERT`/`UPDATE`/`DELETE`), материализацию и оптимизацию, а также сравнение CTE с подзапросами и временными таблицами.
+**Цель работы:** Изучить на практике обобщённые табличные выражения (Common Table Expressions, CTE) в PostgreSQL/Postgres Pro: синтаксис `WITH`, рекурсивные CTE
 
 
 ## Часть 0. Подготовка окружения (10 минут)
@@ -161,7 +161,6 @@ WHERE sub.avg_salary > 150000
 ORDER BY sub.avg_salary DESC;
 ```
 
-**Вывод:** CTE делает запрос более читаемым, особенно когда логика многоступенчатая.
 
 ### 1.3. Несколько CTE в одном запросе
 
@@ -194,7 +193,6 @@ JOIN departments d ON ds.dept_id = d.dept_id
 ORDER BY diff_from_company DESC;
 ```
 
-**Важно:** CTE могут ссылаться друг на друга: последующие CTE видят предыдущие.
 
 **Задание 1.4:** CTE, ссылающийся на предыдущий CTE.
 
@@ -261,128 +259,12 @@ WHERE EXISTS (
 ```
 
 
-## Часть 2. CTE с DML-операциями
-Одно из ключевых преимуществ CTE — возможность выполнения `INSERT`, `UPDATE`, `DELETE` внутри `WITH`.
-
-### 2.1. UPDATE в CTE
-
-**Задание 2.1:** Повысьте зарплату всем разработчикам на 10% и запишите изменение в журнал.
-
-```sql
-WITH updated AS (
-    UPDATE employees
-    SET salary = salary * 1.10
-    WHERE position LIKE '%Developer%'
-    RETURNING emp_id, emp_name, salary
-)
-INSERT INTO audit_log (action, emp_id, new_salary)
-SELECT 'SALARY_INCREASE', emp_id, salary
-FROM updated;
-
--- Проверка
-SELECT * FROM audit_log;
-SELECT emp_id, emp_name, salary FROM employees WHERE position LIKE '%Developer%';
-```
-
-**Ключевой момент:** `UPDATE ... RETURNING` возвращает изменённые строки, которые можно использовать в другом CTE.
-
-### 2.2. DELETE в CTE
-
-**Задание 2.2:** Удалите продажи за определённый период и верните их сумму.
-
-```sql
-WITH deleted_sales AS (
-    DELETE FROM sales
-    WHERE sale_date < '2024-03-01'
-    RETURNING amount, region
-)
-SELECT 
-    region,
-    COUNT(*)         AS deleted_count,
-    SUM(amount)      AS deleted_total
-FROM deleted_sales
-GROUP BY region
-ORDER BY deleted_total DESC;
-```
-
-### 2.3. INSERT в CTE
-
-**Задание 2.3:** Перенесите «мёртвые» записи из одной таблицы в архивную.
-
-```sql
--- Создаём архивную таблицу
-CREATE TABLE sales_archive (LIKE sales INCLUDING ALL);
-
--- Переносим старые продажи
-WITH moved AS (
-    DELETE FROM sales
-    WHERE sale_date < '2024-04-01'
-    RETURNING *
-)
-INSERT INTO sales_archive
-SELECT * FROM moved;
-
--- Проверка
-SELECT count(*) FROM sales;
-SELECT count(*) FROM sales_archive;
-```
-
-### 2.4. Несколько DML в одном запросе
-
-**Задание 2.4:** Комплексная операция: обновление + логирование в одной транзакции.
-
-```sql
-WITH 
-old_data AS (
-    SELECT emp_id, salary FROM employees WHERE dept_id = 5
-),
-updated AS (
-    UPDATE employees
-    SET salary = salary * 1.05
-    WHERE dept_id = 5
-    RETURNING emp_id, salary
-)
-INSERT INTO audit_log (action, emp_id, old_salary, new_salary)
-SELECT 
-    'DEPT5_RAISE',
-    u.emp_id,
-    o.salary,
-    u.salary
-FROM updated u
-JOIN old_data o ON o.emp_id = u.emp_id;
-
--- Проверка
-SELECT * FROM audit_log WHERE action = 'DEPT5_RAISE';
-```
-
-### 2.5. Практическое задание
-
-**Задание 2.5:** Напишите CTE, который:
-1. Находит сотрудников со средней зарплатой выше 150000
-2. Повышает им зарплату на 5%
-3. Записывает изменения в `audit_log`
-
-```sql
-WITH high_earners AS (
-    SELECT emp_id, salary
-    FROM employees
-    WHERE salary > 150000
-),
-updated AS (
-    UPDATE employees e
-    SET salary = e.salary * 1.05
-    FROM high_earners h
-    WHERE e.emp_id = h.emp_id
-    RETURNING e.emp_id, e.salary
-)
-INSERT INTO audit_log (action, emp_id, new_salary)
-SELECT 'HIGH_EARNER_RAISE', emp_id, salary FROM updated;
-```
 
 
-## Часть 3. Рекурсивные CTE
 
-### 3.1. Что такое рекурсивный CTE?
+## Часть 2. Рекурсивные CTE
+
+### 2.1. Что такое рекурсивный CTE?
 
 **Рекурсивный CTE** — это CTE, который ссылается на себя. Он используется для обхода иерархических структур (деревьев, графов), генерации последовательностей и т.п.
 
@@ -403,11 +285,10 @@ WITH RECURSIVE имя AS (
 SELECT ... FROM имя;
 ```
 
-**Важно:** `UNION ALL` между частями обязателен. `RECURSIVE` пишется один раз — после `WITH`, даже если рекурсивных CTE несколько.
 
-### 3.2. Обход иерархии сотрудников
+### 2.2. Обход иерархии сотрудников
 
-**Задание 3.1:** Выведите всех сотрудников с указанием их уровня в иерархии.
+**Задание 2.1:** Выведите всех сотрудников с указанием их уровня в иерархии.
 
 ```sql
 WITH RECURSIVE emp_hierarchy AS (
@@ -442,11 +323,10 @@ FROM emp_hierarchy
 ORDER BY path;
 ```
 
-**Результат:** дерево сотрудников с отступами по уровню.
 
-### 3.3. Обход иерархии отделов
+### 2.3. Обход иерархии отделов
 
-**Задание 3.2:** Выведите все отделы с указанием полного пути.
+**Задание 2.2:** Выведите все отделы с указанием полного пути.
 
 ```sql
 WITH RECURSIVE dept_tree AS (
@@ -480,9 +360,9 @@ FROM dept_tree
 ORDER BY full_path;
 ```
 
-### 3.4. Генерация последовательностей
+### 2.4. Генерация последовательностей
 
-**Задание 3.3:** Сгенерируйте последовательность чисел от 1 до 10 и их квадраты.
+**Задание 2.3:** Сгенерируйте последовательность чисел от 1 до 10 и их квадраты.
 
 ```sql
 WITH RECURSIVE numbers AS (
@@ -504,9 +384,9 @@ WITH RECURSIVE dates AS (
 SELECT d, to_char(d, 'Day') AS weekday FROM dates;
 ```
 
-### 3.5. Защита от бесконечной рекурсии
+### 2.5. Защита от бесконечной рекурсии
 
-**Задание 3.5:** Продемонстрируйте бесконечный цикл и способ его остановить.
+**Задание 2.5:** Продемонстрируйте бесконечный цикл и способ его остановить.
 
 ```sql
 -- ОПАСНО: этот запрос вызовет бесконечный цикл (не запускайте без LIMIT/WHERE)
@@ -537,9 +417,9 @@ WITH RECURSIVE infinite_limited AS (
 SELECT * FROM infinite_limited LIMIT 10;
 ```
 
-### 3.6. Поиск пути от сотрудника до CEO
+### 2.6. Поиск пути от сотрудника до CEO
 
-**Задание 3.6:** Для каждого сотрудника выведите путь к CEO.
+**Задание 2.6:** Для каждого сотрудника выведите путь к CEO.
 
 ```sql
 WITH RECURSIVE emp_path AS (
@@ -574,11 +454,10 @@ WHERE manager_id IS NULL
 ORDER BY emp_id;
 ```
 
-**Пояснение:** запрос рекурсивно «поднимается» от сотрудника к его менеджеру, пока не дойдёт до CEO (manager_id = NULL).
 
-### 3.7. Практическое задание
+### 2.7. Практическое задание
 
-**Задание 3.7:** Выведите для каждого отдела количество сотрудников **в нём и во всех его подчинённых отделах** (агрегация по дереву).
+**Задание 2.7:** Выведите для каждого отдела количество сотрудников **в нём и во всех его подчинённых отделах** (агрегация по дереву).
 
 ```sql
 WITH RECURSIVE dept_descendants AS (
@@ -675,58 +554,7 @@ SELECT * FROM dept_avg WHERE dept_id = 1;
 | CTE используется один раз и содержит фильтр | `NOT MATERIALIZED` для оптимизации |
 | CTE рекурсивный | Всегда материализуется |
 
-### 4.4. CTE vs подзапрос vs временная таблица
 
-**Задание 4.3:** Сравните три подхода на одной задаче — найти топ-отдел по средней зарплате.
-
-**Вариант 1: Подзапрос**
-
-```sql
-EXPLAIN (ANALYZE, COSTS OFF)
-SELECT d.dept_name, sub.avg_salary
-FROM (
-    SELECT dept_id, AVG(salary) AS avg_salary
-    FROM employees
-    GROUP BY dept_id
-) sub
-JOIN departments d ON sub.dept_id = d.dept_id
-ORDER BY sub.avg_salary DESC
-LIMIT 1;
-```
-
-**Вариант 2: CTE**
-
-```sql
-EXPLAIN (ANALYZE, COSTS OFF)
-WITH dept_avg AS (
-    SELECT dept_id, AVG(salary) AS avg_salary
-    FROM employees
-    GROUP BY dept_id
-)
-SELECT d.dept_name, dept_avg.avg_salary
-FROM dept_avg
-JOIN departments d ON dept_avg.dept_id = d.dept_id
-ORDER BY dept_avg.avg_salary DESC
-LIMIT 1;
-```
-
-**Вариант 3: Временная таблица**
-
-```sql
-CREATE TEMP TABLE tmp_dept_avg AS
-SELECT dept_id, AVG(salary) AS avg_salary
-FROM employees
-GROUP BY dept_id;
-
-EXPLAIN (ANALYZE, COSTS OFF)
-SELECT d.dept_name, tmp_dept_avg.avg_salary
-FROM tmp_dept_avg
-JOIN departments d ON tmp_dept_avg.dept_id = d.dept_id
-ORDER BY tmp_dept_avg.avg_salary DESC
-LIMIT 1;
-
-DROP TABLE tmp_dept_avg;
-```
 
 ## Очистка окружения
 
