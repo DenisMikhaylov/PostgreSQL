@@ -806,38 +806,6 @@ WHERE rn = 1
 ORDER BY dept_name;
 ```
 
-### 4.6. Практическое задание: анализ динамики
-
-**Задание 4.12:** Для каждого проекта выведите часы по сотрудникам и разницу с предыдущим сотрудником.
-
-```sql
-SELECT 
-    p.project_name,
-    e.emp_name,
-    a.hours,
-    LAG(a.hours) OVER (PARTITION BY a.project_id ORDER BY a.hours DESC) AS prev_hours,
-    LEAD(a.hours) OVER (PARTITION BY a.project_id ORDER BY a.hours DESC) AS next_hours,
-    SUM(a.hours) OVER (PARTITION BY a.project_id) AS total_project_hours
-FROM assignments a
-JOIN employees e ON a.emp_id = e.emp_id
-JOIN projects p ON a.project_id = p.project_id
-ORDER BY p.project_name, a.hours DESC;
-```
-
-**Задание 4.13:** Доля сотрудника в общем количестве часов по проекту.
-
-```sql
-SELECT 
-    p.project_name,
-    e.emp_name,
-    a.hours,
-    SUM(a.hours) OVER (PARTITION BY a.project_id) AS total_hours,
-    ROUND(100.0 * a.hours / SUM(a.hours) OVER (PARTITION BY a.project_id), 2) AS pct
-FROM assignments a
-JOIN employees e ON a.emp_id = e.emp_id
-JOIN projects p ON a.project_id = p.project_id
-ORDER BY p.project_name, pct DESC;
-```
 
 
 ## Очистка окружения
