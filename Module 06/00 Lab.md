@@ -426,10 +426,10 @@ SELECT * FROM users WHERE lower(email) = 'user12345@example.com';
 **Задание 5.3:** Создайте индекс на выражении с конкатенацией.
 
 ```sql
-CREATE INDEX idx_users_fullname_lower ON users(lower(full_name));
+CREATE INDEX idx_user_fullname_city ON users (( full_name || ' ' || city));
 
 EXPLAIN (ANALYZE, BUFFERS)
-SELECT * FROM users WHERE lower(full_name) = 'user name 12345';
+SELECT * FROM users WHERE full_name || ' ' || city = 'User Name 1 Санкт-Петербург';
 ```
 
 ### 5.3. Индекс на выражении с JSONB
